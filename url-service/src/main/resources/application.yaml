@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: url-service
+
+
+url:
+  short-url-length: 6
