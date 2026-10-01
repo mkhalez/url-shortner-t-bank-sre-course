@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>URL Shortener</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 760px; margin: 40px auto; padding: 0 16px; }
+        h1 { margin-bottom: 24px; }
+        section { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin-bottom: 20px; }
+        input { padding: 8px; margin-right: 6px; width: 280px; }
+        button { padding: 8px 14px; cursor: pointer; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        td, th { border-bottom: 1px solid #eee; padding: 6px; text-align: left; word-break: break-all; }
+        .error { color: #c00; margin-top: 8px; }
+        .ok { color: #070; margin-top: 8px; }
+    </style>
+</head>
+<body>
+<h1>URL Shortener</h1>
+
+<section>
+    <h3>Создать короткую ссылку</h3>
+    <input id="longUrl" placeholder="https://example.com/very/long/url">
+    <button onclick="createRandom()">Сократить</button>
+</section>
+
+<section>
+    <h3>Создать со своим кодом</h3>
+    <input id="customLongUrl" placeholder="https://example.com">
+    <input id="customCode" placeholder="мой-код" style="width:140px">
+    <button onclick="createCustom()">Создать</button>
+</section>
+
+<div id="message"></div>
+
+<section>
+    <h3>Все ссылки</h3>
+    <button onclick="loadAll()">Обновить</button>
+    <table>
+        <thead><tr><th>ID</th><th>Оригинал</th><th>Короткая</th><th></th></tr></thead>
+        <tbody id="rows"></tbody>
+    </table>
+</section>
+
+<script>
+    const msg = document.getElementById('message');
+
+    function show(text, isError) {
+        msg.className = isError ? 'error' : 'ok';
+        msg.textContent = text;
+    }
+
+    async function api(path, options = {}) {
+        const res = await fetch(path, {
+            headers: { 'Content-Type': 'application/json' },
+            ...options
+        });
+        if (res.status === 204) return null;
+        const body = await res.json().catch(() => null);
+        if (!res.ok) {
+            const details = body?.errors ? ' ' + JSON.stringify(body.errors) : '';
+            throw new Error((body?.detail || res.statusText) + details);
+        }
+        return body;
+    }
+
+    async function createRandom() {
+        try {
+            const longUrl = document.getElementById('longUrl').value;
+            const r = await api('/urls', { method: 'POST', body: JSON.stringify({ longUrl }) });
+            show('Создано: ' + r.shortUrl, false);
+            loadAll();
+        } catch (e) { show(e.message, true); }
+    }
+
+    async function createCustom() {
+        try {
+            const longUrl = document.getElementById('customLongUrl').value;
+            const customShortCode = document.getElementById('customCode').value;
+            const r = await api('/urls/custom', {
+                method: 'POST',
+                body: JSON.stringify({ longUrl, customShortCode })
+            });
+            show('Создано: ' + r.shortUrl, false);
+            loadAll();
+        } catch (e) { show(e.message, true); }
+    }
+
+    async function loadAll() {
+        try {
+            const list = await api('/urls');
+            const rows = document.getElementById('rows');
+            rows.innerHTML = '';
+            for (const u of list) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+          <td>${u.id}</td>
+          <td>${escapeHtml(u.longUrl)}</td>
+          <td><a href="${escapeHtml(u.shortUrl)}" target="_blank">${escapeHtml(u.shortUrl)}</a></td>
+          <td>
+            <button onclick="editUrl(${u.id})">Изм.</button>
+            <button onclick="removeUrl(${u.id})">Удалить</button>
+          </td>`;
+                rows.appendChild(tr);
+            }
+        } catch (e) { show(e.message, true); }
+    }
+
+    async function editUrl(id) {
+        const longUrl = prompt('Новый длинный URL:');
+        if (!longUrl) return;
+        try {
+            await api('/urls/' + id, { method: 'PUT', body: JSON.stringify({ longUrl }) });
+            show('Обновлено', false);
+            loadAll();
+        } catch (e) { show(e.message, true); }
+    }
+
+    async function removeUrl(id) {
+        if (!confirm('Удалить ссылку ' + id + '?')) return;
+        try {
+            await api('/urls/' + id, { method: 'DELETE' });
+            show('Удалено', false);
+            loadAll();
+        } catch (e) { show(e.message, true); }
+    }
+
+    function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, c =>
+            ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    loadAll();
+</script>
+</body>
+</html>

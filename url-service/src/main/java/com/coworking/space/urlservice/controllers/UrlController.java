@@ -2,6 +2,7 @@ package com.coworking.space.urlservice.controllers;
 
 import com.coworking.space.urlservice.dto.requests.CreateCustomUrlRequest;
 import com.coworking.space.urlservice.dto.requests.CreateRandomUrlRequest;
+import com.coworking.space.urlservice.dto.requests.UpdateUrlRequest;
 import com.coworking.space.urlservice.dto.responses.UrlResponse;
 import com.coworking.space.urlservice.services.UrlService;
 import jakarta.validation.Valid;
@@ -9,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/urls")
@@ -40,25 +43,20 @@ public class UrlController {
                 .body(response);
     }
 
+    @PutMapping("/{id}")
+    public UrlResponse update(@PathVariable int id, @RequestBody @Valid UpdateUrlRequest request) {
+        return urlService.update(id, request);
+    }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable int id) {
+        urlService.delete(id);
+        return ResponseEntity.noContent().build();
+    }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    @GetMapping
+    public List<UrlResponse> findAll() {
+        return urlService.findAll();
+    }
 
 }

@@ -2,6 +2,7 @@ package com.coworking.space.urlservice.services.implementation;
 
 import com.coworking.space.urlservice.domain.entities.UrlEntity;
 import com.coworking.space.urlservice.dto.requests.CheckShortCodeRequest;
+import com.coworking.space.urlservice.dto.requests.UpdateUrlRequest;
 import com.coworking.space.urlservice.dto.responses.ShortCodeCheckStatus;
 import com.coworking.space.urlservice.infrastructure.excaptions.LimitTokenAttemptException;
 import com.coworking.space.urlservice.infrastructure.excaptions.NotValidCustomCodeException;
@@ -18,6 +19,7 @@ import com.coworking.space.urlservice.utils.ModerationGateway;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Service
@@ -88,6 +90,29 @@ public class UrlServiceImpl implements UrlService {
                 .orElseThrow(() -> new UrlNotFoundException(SHORT_CODE_ALREADY_EXISTS));
 
         return entity.getLongUrl();
+    }
+
+    @Override
+    public List<UrlResponse> findAll() {
+        return urlRepo.findAll().stream().map(urlMapper::toResponse).toList();
+    }
+
+    @Override
+    public UrlResponse update(int id, UpdateUrlRequest request) {
+        var entity = urlRepo.findById(id)
+                .orElseThrow(() -> new UrlNotFoundException(LONG_URL_NOT_FOUND));
+        entity.setLongUrl(request.getLongUrl());
+        urlRepo.save(entity);
+
+        return urlMapper.toResponse(entity);
+    }
+
+    @Override
+    public void delete(int id) {
+        if (!urlRepo.existsById(id)) {
+            throw new UrlNotFoundException(LONG_URL_NOT_FOUND);
+        }
+        urlRepo.deleteById(id);
     }
 
     private String generateShortToken(int length) {

@@ -10,6 +10,6 @@ server:
 app:
   moderation:
     banned-words:
-      - spam
-      - slop
-      - c#
+      - spamm
+      - slopp
+      - booot

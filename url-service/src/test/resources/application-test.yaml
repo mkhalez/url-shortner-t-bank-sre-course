@@ -10,6 +10,6 @@ url:
   host: http://localhost:8080/
 
 moderation-client:
-  base-url: http://${MODERATION_SERVICE_HOST}:${MODERATION_SERVICE_PORT}
+  base-url: http://test
   connection-timeout: 3000
   read-timeout: 3000
