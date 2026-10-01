@@ -1,9 +1,9 @@
 package com.coworking.space.urlservice.services.implementation;
 
 import com.coworking.space.urlservice.domain.entities.UrlEntity;
-import com.coworking.space.urlservice.domain.excaptions.LimitTokenAttemptException;
-import com.coworking.space.urlservice.domain.excaptions.UrlAlreadyExistsException;
-import com.coworking.space.urlservice.domain.excaptions.UrlNotFoundException;
+import com.coworking.space.urlservice.infrastructure.excaptions.LimitTokenAttemptException;
+import com.coworking.space.urlservice.infrastructure.excaptions.UrlAlreadyExistsException;
+import com.coworking.space.urlservice.infrastructure.excaptions.UrlNotFoundException;
 import com.coworking.space.urlservice.dto.requests.CreateCustomUrlRequest;
 import com.coworking.space.urlservice.dto.requests.CreateRandomUrlRequest;
 import com.coworking.space.urlservice.dto.responses.UrlResponse;
@@ -27,7 +27,7 @@ public class UrlServiceImpl implements UrlService {
     private static final String BASE62 = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     private static final String LONG_URL_NOT_FOUND = "long url not found";
     private static final String ATTEMPT_LIMIT_OF_TOKEN_CREATION = "the limit of attempts to create a token has been exceeded";
-    private static final String SHORT_URL_ALREADY_EXISTS = "short url already exists";
+    private static final String SHORT_CODE_ALREADY_EXISTS = "short code already exists";
 
     @Override
     public UrlResponse createShortUrl(CreateRandomUrlRequest request) {
@@ -57,7 +57,7 @@ public class UrlServiceImpl implements UrlService {
     @Override
     public UrlResponse createCustomShortUrl(CreateCustomUrlRequest request) {
         if(urlRepo.existsByShortCode(request.getCustomShortCode())) {
-            throw new UrlAlreadyExistsException(SHORT_URL_ALREADY_EXISTS);
+            throw new UrlAlreadyExistsException(SHORT_CODE_ALREADY_EXISTS);
         }
 
         var urlEntity = UrlEntity.builder()
@@ -72,7 +72,7 @@ public class UrlServiceImpl implements UrlService {
     @Override
     public String getLongUrl(String shortCode) {
         var entity = urlRepo.findByShortCode(shortCode)
-                .orElseThrow(() -> new UrlNotFoundException(SHORT_URL_ALREADY_EXISTS));
+                .orElseThrow(() -> new UrlNotFoundException(SHORT_CODE_ALREADY_EXISTS));
 
         return entity.getLongUrl();
     }
