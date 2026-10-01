@@ -1,8 +1,6 @@
 package com.coworking.space.urlservice.infrastructure.handlers;
 
-import com.coworking.space.urlservice.infrastructure.excaptions.LimitTokenAttemptException;
-import com.coworking.space.urlservice.infrastructure.excaptions.UrlAlreadyExistsException;
-import com.coworking.space.urlservice.infrastructure.excaptions.UrlNotFoundException;
+import com.coworking.space.urlservice.infrastructure.excaptions.*;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -30,7 +28,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 .collect(Collectors.toMap(
                         FieldError::getField,
                         fe -> Objects.requireNonNullElse(fe.getDefaultMessage(), "invalid"),
-                        (first, second) -> first));
+                        (first, _) -> first));
 
         var problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Validation failed");
         problem.setProperty("errors", errors);
@@ -55,6 +53,27 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return ProblemDetail.forStatusAndDetail(
                 HttpStatus.SERVICE_UNAVAILABLE,
                 "Could not generate a unique short code, please try again later");
+    }
+
+    @ExceptionHandler(NotValidCustomCodeException.class)
+    public ProblemDetail handleNotValidCustomCodeException(NotValidCustomCodeException ex) {
+        return ProblemDetail.forStatusAndDetail(
+                HttpStatus.UNPROCESSABLE_CONTENT,
+                "сustom short code is not allowed");
+    }
+
+    @ExceptionHandler(ModerationUnavailableException.class)
+    public ProblemDetail handleModerationUnavailable(ModerationUnavailableException ex) {
+        return ProblemDetail.forStatusAndDetail(
+                HttpStatus.SERVICE_UNAVAILABLE,
+                "short code verification is temporarily unavailable, please try again later");
+    }
+
+    @ExceptionHandler(ModerationIntegrationException.class)
+    public ProblemDetail handleModerationIntegration(ModerationIntegrationException ex) {
+        return ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_GATEWAY,
+                "short code verification failed");
     }
 
     @ExceptionHandler(Exception.class)

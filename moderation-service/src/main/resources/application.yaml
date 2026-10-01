@@ -1,3 +1,15 @@
 spring:
+  config:
+    import: optional:file:.env[.properties]
   application:
     name: moderation-service
+
+server:
+  port: ${MODERATION_SERVICE_PORT}
+
+app:
+  moderation:
+    banned-words:
+      - spam
+      - slop
+      - c#

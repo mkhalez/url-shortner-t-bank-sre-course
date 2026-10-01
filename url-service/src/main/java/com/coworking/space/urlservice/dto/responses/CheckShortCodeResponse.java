@@ -1,4 +1,4 @@
-package com.coworking.space.moderationservice.dto.responses;
+package com.coworking.space.urlservice.dto.responses;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

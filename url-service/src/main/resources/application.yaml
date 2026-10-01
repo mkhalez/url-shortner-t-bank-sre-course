@@ -1,9 +1,9 @@
 server:
-  port: 8080
+  port: ${URL_SERVICE_PORT}
 
 spring:
   config:
-    import: optional:file:url-service/.env[.properties]
+    import: optional:file:.env[.properties]
   application:
     name: url-service
   jpa:
@@ -16,11 +16,17 @@ spring:
         format_sql: true
 
   datasource:
-    url: jdbc:postgresql://localhost:${POSTGRES_PORT}/${POSTGRES_DB}
+    url: jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
     username: ${POSTGRES_USER}
     password: ${POSTGRES_PASSWORD}
 
 
 url:
   short-url-length: 6
-  host: "http://localhost:8080/"
+  host: http://${URL_SERVICE_HOST}:${URL_SERVICE_PORT}/
+
+
+moderation-client:
+  base-url: http://${MODERATION_SERVICE_HOST}:${MODERATION_SERVICE_PORT}
+  connection-timeout: 3000
+  read-timeout: 3000
