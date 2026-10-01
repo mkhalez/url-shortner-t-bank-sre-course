@@ -1,7 +1,26 @@
+server:
+  port: 8080
+
 spring:
+  config:
+    import: optional:file:url-service/.env[.properties]
   application:
     name: url-service
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        default_batch_fetch_size: 50
+        format_sql: true
+
+  datasource:
+    url: jdbc:postgresql://localhost:${POSTGRES_PORT}/${POSTGRES_DB}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
 
 
 url:
   short-url-length: 6
+  host: "http://localhost:8080/"

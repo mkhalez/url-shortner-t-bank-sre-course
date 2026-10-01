@@ -11,5 +11,5 @@ public class CreateCustomUrlRequest {
     @NotBlank
     private String longUrl;
 
-    private String customShortUrl;
+    private String customShortCode;
 }

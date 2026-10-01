@@ -1,6 +1,7 @@
 package com.coworking.space.urlservice.controllers;
 
 import com.coworking.space.urlservice.dto.requests.CreateCustomUrlRequest;
+import com.coworking.space.urlservice.dto.requests.CreateRandomUrlRequest;
 import com.coworking.space.urlservice.dto.responses.UrlResponse;
 import com.coworking.space.urlservice.services.UrlService;
 import lombok.RequiredArgsConstructor;
@@ -17,8 +18,8 @@ public class UrlController {
     private static final String LOCATION_OF_CREATED_RESOURCE_PATTERN = "/urls/{id}";
 
     @PostMapping
-    public ResponseEntity<UrlResponse> createUrl(@RequestBody String originalUrl, UriComponentsBuilder builder) {
-        var response = urlService.createShortUrl(originalUrl);
+    public ResponseEntity<UrlResponse> createUrl(@RequestBody CreateRandomUrlRequest request, UriComponentsBuilder builder) {
+        var response = urlService.createShortUrl(request);
         var location = builder.path(LOCATION_OF_CREATED_RESOURCE_PATTERN).buildAndExpand(response.id()).toUri();
         return ResponseEntity.created(location)
                 .body(response);

@@ -1,5 +1,6 @@
 package com.coworking.space.urlservice.infrastructure.properties;
 
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -10,7 +11,10 @@ import org.springframework.validation.annotation.Validated;
 @AllArgsConstructor
 @Getter
 @Validated
-public class UrlServiceProperties {
+public class UrlProperties {
     @Positive
     private int shortUrlLength;
+
+    @NotBlank
+    private String host;
 }

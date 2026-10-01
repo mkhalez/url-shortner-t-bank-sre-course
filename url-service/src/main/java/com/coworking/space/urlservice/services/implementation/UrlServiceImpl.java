@@ -5,8 +5,9 @@ import com.coworking.space.urlservice.domain.excaptions.LimitTokenAttemptExcepti
 import com.coworking.space.urlservice.domain.excaptions.UrlAlreadyExistsException;
 import com.coworking.space.urlservice.domain.excaptions.UrlNotFoundException;
 import com.coworking.space.urlservice.dto.requests.CreateCustomUrlRequest;
+import com.coworking.space.urlservice.dto.requests.CreateRandomUrlRequest;
 import com.coworking.space.urlservice.dto.responses.UrlResponse;
-import com.coworking.space.urlservice.infrastructure.properties.UrlServiceProperties;
+import com.coworking.space.urlservice.infrastructure.properties.UrlProperties;
 import com.coworking.space.urlservice.mappers.UrlMapper;
 import com.coworking.space.urlservice.repositories.UrlRepository;
 import com.coworking.space.urlservice.services.UrlService;
@@ -20,7 +21,7 @@ import java.util.concurrent.ThreadLocalRandom;
 public class UrlServiceImpl implements UrlService {
     private final UrlRepository urlRepo;
     private final UrlMapper urlMapper;
-    private final UrlServiceProperties urlServiceProperties;
+    private final UrlProperties urlServiceProperties;
 
     private static final int MAX_ATTEMPT_TO_CREATE = 1000;
     private static final String BASE62 = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -29,17 +30,17 @@ public class UrlServiceImpl implements UrlService {
     private static final String SHORT_URL_ALREADY_EXISTS = "short url already exists";
 
     @Override
-    public UrlResponse createShortUrl(String longUrl) {
-        var entity = urlRepo.findByLongUrl(longUrl);
+    public UrlResponse createShortUrl(CreateRandomUrlRequest request) {
+        var entity = urlRepo.findByLongUrl(request.getLongUrl());
 
         if(entity.isPresent()) {
             return urlMapper.toResponse(entity.get());
         }
 
-        String shortUrl = generateShortToken(urlServiceProperties.getShortUrlLength());
+        String shortCode = generateShortToken(urlServiceProperties.getShortUrlLength());
         var urlEntity = UrlEntity.builder()
-                .longUrl(longUrl)
-                .shortUrl(shortUrl)
+                .longUrl(request.getLongUrl())
+                .shortCode(shortCode)
                 .build();
 
         urlRepo.save(urlEntity);
@@ -55,17 +56,25 @@ public class UrlServiceImpl implements UrlService {
 
     @Override
     public UrlResponse createCustomShortUrl(CreateCustomUrlRequest request) {
-        if(urlRepo.existsByShortUrl(request.getCustomShortUrl())) {
+        if(urlRepo.existsByShortCode(request.getCustomShortCode())) {
             throw new UrlAlreadyExistsException(SHORT_URL_ALREADY_EXISTS);
         }
 
         var urlEntity = UrlEntity.builder()
                 .longUrl(request.getLongUrl())
-                .shortUrl(request.getCustomShortUrl())
+                .shortCode(request.getCustomShortCode())
                 .build();
 
         urlRepo.save(urlEntity);
         return urlMapper.toResponse(urlEntity);
+    }
+
+    @Override
+    public String getLongUrl(String shortCode) {
+        var entity = urlRepo.findByShortCode(shortCode)
+                .orElseThrow(() -> new UrlNotFoundException(SHORT_URL_ALREADY_EXISTS));
+
+        return entity.getLongUrl();
     }
 
     private String generateShortToken(int length) {
@@ -75,12 +84,12 @@ public class UrlServiceImpl implements UrlService {
         for(int i = 0; i < MAX_ATTEMPT_TO_CREATE; i++) {
             for(int j = 0; j < length; j++) {
                 int randomIndex = random.nextInt(BASE62.length());
-                token.append(randomIndex);
+                token.append(BASE62.charAt(randomIndex));
             }
 
-            String newShortUrl = token.toString();
-            if(!urlRepo.existsByShortUrl(newShortUrl)) {
-                return newShortUrl;
+            String shortCode = token.toString();
+            if(!urlRepo.existsByShortCode(shortCode)) {
+                return shortCode;
             }
         }
 

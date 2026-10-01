@@ -31,3 +31,11 @@ build/
 
 ### VS Code ###
 .vscode/
+
+
+.env
+**/.env
+
+.mvn/
+mvnw
+mvnw.cmd
