@@ -1,0 +1,15 @@
+server:
+  port: 8080
+
+spring:
+  liquibase:
+    change-log: file:migrations/changelog.xml
+
+url:
+  short-url-length: 6
+  host: http://localhost:8080/
+
+moderation-client:
+  base-url: http://${MODERATION_SERVICE_HOST}:${MODERATION_SERVICE_PORT}
+  connection-timeout: 3000
+  read-timeout: 3000

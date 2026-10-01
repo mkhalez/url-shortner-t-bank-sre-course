@@ -1,11 +1,14 @@
 package com.coworking.space.moderationservice.dto.requests;
 
+import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 @Getter
+@AllArgsConstructor
+@NoArgsConstructor
 public class CheckShortCodeRequest {
+    @NotBlank
     private String shortCode;
 }
