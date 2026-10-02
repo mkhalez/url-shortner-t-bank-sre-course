@@ -6,12 +6,14 @@ import com.coworking.space.moderationservice.dto.responses.CheckShortCodeRespons
 import com.coworking.space.moderationservice.infrastrucure.properies.BannedWordsProperties;
 import com.coworking.space.moderationservice.services.ShortCodeChecker;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ShortCodeCheckerImpl implements ShortCodeChecker {
     private final BannedWordsProperties bannedWordsProperties;
 
@@ -23,6 +25,11 @@ public class ShortCodeCheckerImpl implements ShortCodeChecker {
                  .anyMatch(normalizedCode::contains)
                  ? ShortCodeCheckStatus.NOT_VALID
                  : ShortCodeCheckStatus.VALID;
+
+        log.atInfo()
+                .addKeyValue("shortCode", request.getShortCode())
+                .addKeyValue("is allowed", currentStatus)
+                .log();
 
         return CheckShortCodeResponse.builder()
                 .shortCode(request.getShortCode())

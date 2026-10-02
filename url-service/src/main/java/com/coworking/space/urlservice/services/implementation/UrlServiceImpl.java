@@ -17,6 +17,7 @@ import com.coworking.space.urlservice.repositories.UrlRepository;
 import com.coworking.space.urlservice.services.UrlService;
 import com.coworking.space.urlservice.utils.ModerationGateway;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -24,6 +25,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UrlServiceImpl implements UrlService {
     private final UrlRepository urlRepo;
     private final UrlMapper urlMapper;
@@ -52,6 +54,12 @@ public class UrlServiceImpl implements UrlService {
                 .build();
 
         urlRepo.save(urlEntity);
+
+        log.atInfo()
+                .addKeyValue("event", "createShortUrl")
+                .addKeyValue("long_url", request.getLongUrl())
+                .addKeyValue("short_code", urlEntity.getShortCode())
+                .log();
         return urlMapper.toResponse(urlEntity);
     }
 
@@ -59,6 +67,11 @@ public class UrlServiceImpl implements UrlService {
     public UrlResponse findById(int id) {
         var entity = urlRepo.findById(id)
                 .orElseThrow(() -> new UrlNotFoundException(LONG_URL_NOT_FOUND));
+
+        log.atInfo()
+                .addKeyValue("event", "findById")
+                .addKeyValue("entity_id", id)
+                .log();
         return urlMapper.toResponse(entity);
     }
 
@@ -81,6 +94,13 @@ public class UrlServiceImpl implements UrlService {
                 .build();
 
         urlRepo.save(urlEntity);
+
+        log.atInfo()
+                .addKeyValue("event", "createCustomShortUrl")
+                .addKeyValue("long_url", request.getLongUrl())
+                .addKeyValue("short_code", urlEntity.getShortCode())
+                .log();
+
         return urlMapper.toResponse(urlEntity);
     }
 
@@ -88,6 +108,12 @@ public class UrlServiceImpl implements UrlService {
     public String getLongUrl(String shortCode) {
         var entity = urlRepo.findByShortCode(shortCode)
                 .orElseThrow(() -> new UrlNotFoundException(SHORT_CODE_ALREADY_EXISTS));
+
+        log.atInfo()
+                .addKeyValue("event", "getLongUrl")
+                .addKeyValue("short_code", shortCode)
+                .addKeyValue("long_url", entity.getLongUrl())
+                .log();
 
         return entity.getLongUrl();
     }
@@ -104,6 +130,12 @@ public class UrlServiceImpl implements UrlService {
         entity.setLongUrl(request.getLongUrl());
         urlRepo.save(entity);
 
+        log.atInfo()
+                .addKeyValue("event", "update")
+                .addKeyValue("long_url", request.getLongUrl())
+                .addKeyValue("new_short_code", entity.getShortCode())
+                .log();
+
         return urlMapper.toResponse(entity);
     }
 
@@ -113,13 +145,18 @@ public class UrlServiceImpl implements UrlService {
             throw new UrlNotFoundException(LONG_URL_NOT_FOUND);
         }
         urlRepo.deleteById(id);
+
+        log.atInfo()
+                .addKeyValue("event", "delete")
+                .addKeyValue("id", id)
+                .log();
     }
 
     private String generateShortToken(int length) {
-        StringBuilder token  = new StringBuilder(length);
         ThreadLocalRandom random = ThreadLocalRandom.current();
 
         for(int i = 0; i < MAX_ATTEMPT_TO_CREATE; i++) {
+            StringBuilder token  = new StringBuilder(length);
             for(int j = 0; j < length; j++) {
                 int randomIndex = random.nextInt(BASE62.length());
                 token.append(BASE62.charAt(randomIndex));
