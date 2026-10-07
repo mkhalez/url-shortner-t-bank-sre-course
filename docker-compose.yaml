@@ -32,7 +32,9 @@ services:
       - backend
 
   url-service:
-    image: mkhalez/url-service:latest
+    build:
+      context: .
+      dockerfile: url-service/Dockerfile
     container_name: url-service
     depends_on:
       url-postgres:
@@ -49,14 +51,18 @@ services:
       POSTGRES_PORT: 5432
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       URL_SERVICE_PORT: ${URL_SERVICE_PORT}
-      URL_SERVICE_HOST: localhost
+      URL_SERVICE_HOST: ${URL_SERVICE_HOST}
       MODERATION_SERVICE_PORT: ${MODERATION_SERVICE_PORT}
-      MODERATION_SERVICE_HOST: moderation-service
+      MODERATION_SERVICE_HOST: ${MODERATION_SERVICE_HOST}
+      HTTP_READ_TIMEOUT: ${HTTP_READ_TIMEOUT}
+      HTTP_CONNECT_TIMEOUT: ${HTTP_CONNECT_TIMEOUT}
     networks:
       - backend
 
   moderation-service:
-    image: mkhalez/moderation-service:latest
+    build:
+      context: .
+      dockerfile: moderation-service/Dockerfile
     container_name: moderation-service
     depends_on:
       url-service:

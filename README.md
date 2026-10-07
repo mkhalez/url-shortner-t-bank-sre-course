@@ -2,8 +2,6 @@
 
 Сервис укорачивания ссылок на Spring Boot (multi-module Maven проект, Java 25, Spring Boot 4.1.1).
 
-## Что за проект
-
 Два микросервиса + PostgreSQL + Liquibase-миграции:
 
 | Компонент | Описание |
@@ -47,13 +45,20 @@
 
 ## Необходимые env
 
-Все переменные задаются через `.env` в корне
+Все переменные задаются через `.env` в корне. Шаблон — `.env.example`:
+
+```bash
+cp .env.example .env
+```
+
+Файл `.env` не коммитится и не включается в архив (см. `.gitignore`).
+Перед запуском замените плейсхолдеры `change_me_*` на свои значения.
 
 - POSTGRES_DB
 - POSTGRES_USER
 - POSTGRES_PASSWORD
 - POSTGRES_PORT
-- POSTGRES_HOSTst
+- POSTGRES_HOST
 - URL_SERVICE_PORT
 - URL_SERVICE_HOST
 - MODERATION_SERVICE_PORT
@@ -62,6 +67,7 @@
 ## Быстрый запуск с помощью Docker Compose
 
 ```bash
+cp .env.example .env
 docker compose up -d
 ```
 
