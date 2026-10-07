@@ -1,0 +1,76 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: url-postgres-service
+  namespace: url-shortener-namespace
+spec:
+  clusterIP: None
+  selector:
+    app: url-postgres
+  ports:
+    - name: pg
+      port: 5432
+      targetPort: pg
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: url-service-postgres
+  namespace: url-shortener-namespace
+spec:
+  serviceName: url-postgres-service
+  replicas: 1
+  selector:
+    matchLabels:
+      app: url-postgres
+  template:
+    metadata:
+      labels:
+        app: url-postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16
+          ports:
+            - name: pg
+              containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: url-service-config
+                  key: POSTGRES_DB
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: url-shortener-secrets
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: url-shortener-secrets
+                  key: POSTGRES_PASSWORD
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          volumeMounts:
+            - name: pgdata
+              mountPath: /var/lib/postgresql/data
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB"]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            exec:
+              command: ["sh", "-c", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB"]
+            initialDelaySeconds: 30
+            periodSeconds: 10
+  volumeClaimTemplates:
+    - metadata:
+        name: pgdata
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi

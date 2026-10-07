@@ -30,3 +30,8 @@ moderation-client:
   base-url: http://${MODERATION_SERVICE_HOST}:${MODERATION_SERVICE_PORT}
   connection-timeout: ${HTTP_READ_TIMEOUT:3000}
   read-timeout: ${HTTP_CONNECT_TIMEOUT:3000}
+
+management:
+  health:
+    probes:
+      enabled: true

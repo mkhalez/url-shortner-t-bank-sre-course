@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: url-service-deployment
+  namespace: url-shortener-namespace
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: url-service
+  template:
+    metadata:
+      labels:
+        app: url-service
+    spec:
+      containers:
+        - name: url-service
+          image: mkhalez/url-service:0.2
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: url-http
+              containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: url-service-config
+            - secretRef:
+                name: url-shortener-secrets
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: url-http
+            initialDelaySeconds: 15
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: url-http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: url-service
+  namespace: url-shortener-namespace
+spec:
+  type: ClusterIP
+  selector:
+    app: url-service
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: url-http

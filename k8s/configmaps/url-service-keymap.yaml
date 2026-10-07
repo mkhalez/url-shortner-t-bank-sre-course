@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: url-service-config
+  namespace: url-shortener-namespace
+data:
+  POSTGRES_HOST: url-postgres-service
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: url-service-db
+  URL_SERVICE_HOST: url-shortener.local
+  URL_SERVICE_PORT: "80"
+  MODERATION_SERVICE_HOST: moderation-service
+  MODERATION_SERVICE_PORT: "8081"
+  HTTP_READ_TIMEOUT: "3000"
+  HTTP_CONNECT_TIMEOUT: "3000"

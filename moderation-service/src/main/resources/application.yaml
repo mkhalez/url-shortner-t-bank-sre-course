@@ -13,3 +13,8 @@ app:
       - spamm
       - slopp
       - booot
+
+management:
+  health:
+    probes:
+      enabled: true

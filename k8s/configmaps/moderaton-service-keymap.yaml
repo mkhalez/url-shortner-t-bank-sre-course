@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: moderation-service-config
+  namespace: url-shortener-namespace
+data:
+  POSTGRES_HOST: url-postgres-service
+  MODERATION_SERVICE_PORT: "8081"
