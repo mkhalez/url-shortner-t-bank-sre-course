@@ -36,6 +36,8 @@ build/
 .env
 **/.env
 
+k8s/secrets/url-service-secrets.yaml
+
 .mvn/
 mvnw
 mvnw.cmd

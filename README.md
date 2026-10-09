@@ -71,6 +71,32 @@ cp .env.example .env
 docker compose up -d
 ```
 
+## Запуск в Kubernetes (minikube)
+
+Секреты не хранятся в репозитории. Шаблон — `k8s/secrets/url-service-secrets.example.yaml`.
+Перед первым `kubectl apply` создайте реальный файл из примера и подставьте свои значения
+вместо плейсхолдеров `change_me_*`:
+
+```bash
+cp k8s/secrets/url-service-secrets.example.yaml k8s/secrets/url-service-secrets.yaml
+```
+
+Файл `k8s/secrets/url-service-secrets.yaml` не коммитится (см. `.gitignore`).
+
+Порядок применения манифестов:
+
+```bash
+kubectl apply -f k8s/namespaces/url-shortener-namespace.yaml
+kubectl apply -f k8s/configmaps/url-service-keymap.yaml \
+  -f k8s/configmaps/moderaton-service-keymap.yaml \
+  -f k8s/secrets/url-service-secrets.yaml
+kubectl apply -f k8s/statefulsets/url-service-postgres-statefulset.yaml
+kubectl apply -f k8s/jobs/url-posgres-migration.yaml
+kubectl apply -f k8s/deploymets/url-service-deployment.yaml \
+  -f k8s/deploymets/moderation-service-deployment.yaml
+kubectl apply -f k8s/ingreses/url-shortener-ingress.yaml
+```
+
 Используемые образы:
 
 - `postgres:16`
