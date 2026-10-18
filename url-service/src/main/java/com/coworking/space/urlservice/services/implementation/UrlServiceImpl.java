@@ -38,6 +38,7 @@ public class UrlServiceImpl implements UrlService {
     private static final String ATTEMPT_LIMIT_OF_TOKEN_CREATION = "the limit of attempts to create a token has been exceeded";
     private static final String SHORT_CODE_ALREADY_EXISTS = "short code already exists";
     private static final String CUSTOM_CODE_CONTAINS_BANNED_WORDS = "custom code contains banned words";
+    private static final String SHORT_CODE_NOT_FOUND = "short code not found";
 
     @Override
     public UrlResponse createShortUrl(CreateRandomUrlRequest request) {
@@ -110,7 +111,7 @@ public class UrlServiceImpl implements UrlService {
     @Override
     public String getLongUrl(String shortCode) {
         var entity = urlRepo.findByShortCode(shortCode)
-                .orElseThrow(() -> new UrlNotFoundException(SHORT_CODE_ALREADY_EXISTS));
+                .orElseThrow(() -> new UrlNotFoundException(SHORT_CODE_NOT_FOUND));
 
         log.atInfo()
                 .addKeyValue("message", "long url resolved by short code")
