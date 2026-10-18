@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: url-service
-          image: mkhalez/url-service:0.2
+          image: mkhalez/url-service:0.5
           imagePullPolicy: IfNotPresent
           ports:
             - name: url-http

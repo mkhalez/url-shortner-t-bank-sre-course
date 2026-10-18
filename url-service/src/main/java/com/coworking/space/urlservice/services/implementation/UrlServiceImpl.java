@@ -57,11 +57,10 @@ public class UrlServiceImpl implements UrlService {
         urlRepo.save(urlEntity);
 
         log.atInfo()
-                .addKeyValue("message", "short url created")
                 .addKeyValue("event", "createShortUrl")
                 .addKeyValue("long_url", request.getLongUrl())
                 .addKeyValue("short_code", urlEntity.getShortCode())
-                .log();
+                .log("short url created");
         return urlMapper.toResponse(urlEntity);
     }
 
@@ -71,10 +70,9 @@ public class UrlServiceImpl implements UrlService {
                 .orElseThrow(() -> new UrlNotFoundException(LONG_URL_NOT_FOUND));
 
         log.atInfo()
-                .addKeyValue("message", "url found by id")
                 .addKeyValue("event", "findById")
                 .addKeyValue("entity_id", id)
-                .log();
+                .log("url found by id");
         return urlMapper.toResponse(entity);
     }
 
@@ -99,11 +97,10 @@ public class UrlServiceImpl implements UrlService {
         urlRepo.save(urlEntity);
 
         log.atInfo()
-                .addKeyValue("message", "custom short url created")
                 .addKeyValue("event", "createCustomShortUrl")
                 .addKeyValue("long_url", request.getLongUrl())
                 .addKeyValue("short_code", urlEntity.getShortCode())
-                .log();
+                .log("custom short url created");
 
         return urlMapper.toResponse(urlEntity);
     }
@@ -114,11 +111,10 @@ public class UrlServiceImpl implements UrlService {
                 .orElseThrow(() -> new UrlNotFoundException(SHORT_CODE_NOT_FOUND));
 
         log.atInfo()
-                .addKeyValue("message", "long url resolved by short code")
                 .addKeyValue("event", "getLongUrl")
                 .addKeyValue("short_code", shortCode)
                 .addKeyValue("long_url", entity.getLongUrl())
-                .log();
+                .log("long url resolved");
 
         return entity.getLongUrl();
     }
@@ -136,11 +132,10 @@ public class UrlServiceImpl implements UrlService {
         urlRepo.save(entity);
 
         log.atInfo()
-                .addKeyValue("message", "url updated")
                 .addKeyValue("event", "update")
                 .addKeyValue("long_url", request.getLongUrl())
                 .addKeyValue("new_short_code", entity.getShortCode())
-                .log();
+                .log("url updated");
 
         return urlMapper.toResponse(entity);
     }
@@ -153,10 +148,9 @@ public class UrlServiceImpl implements UrlService {
         urlRepo.deleteById(id);
 
         log.atInfo()
-                .addKeyValue("message", "url deleted")
                 .addKeyValue("event", "delete")
                 .addKeyValue("id", id)
-                .log();
+                .log("url deleted");
     }
 
     private String generateShortToken(int length) {
