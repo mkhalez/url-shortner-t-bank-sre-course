@@ -56,6 +56,7 @@ public class UrlServiceImpl implements UrlService {
         urlRepo.save(urlEntity);
 
         log.atInfo()
+                .addKeyValue("message", "short url created")
                 .addKeyValue("event", "createShortUrl")
                 .addKeyValue("long_url", request.getLongUrl())
                 .addKeyValue("short_code", urlEntity.getShortCode())
@@ -69,6 +70,7 @@ public class UrlServiceImpl implements UrlService {
                 .orElseThrow(() -> new UrlNotFoundException(LONG_URL_NOT_FOUND));
 
         log.atInfo()
+                .addKeyValue("message", "url found by id")
                 .addKeyValue("event", "findById")
                 .addKeyValue("entity_id", id)
                 .log();
@@ -96,6 +98,7 @@ public class UrlServiceImpl implements UrlService {
         urlRepo.save(urlEntity);
 
         log.atInfo()
+                .addKeyValue("message", "custom short url created")
                 .addKeyValue("event", "createCustomShortUrl")
                 .addKeyValue("long_url", request.getLongUrl())
                 .addKeyValue("short_code", urlEntity.getShortCode())
@@ -110,6 +113,7 @@ public class UrlServiceImpl implements UrlService {
                 .orElseThrow(() -> new UrlNotFoundException(SHORT_CODE_ALREADY_EXISTS));
 
         log.atInfo()
+                .addKeyValue("message", "long url resolved by short code")
                 .addKeyValue("event", "getLongUrl")
                 .addKeyValue("short_code", shortCode)
                 .addKeyValue("long_url", entity.getLongUrl())
@@ -131,6 +135,7 @@ public class UrlServiceImpl implements UrlService {
         urlRepo.save(entity);
 
         log.atInfo()
+                .addKeyValue("message", "url updated")
                 .addKeyValue("event", "update")
                 .addKeyValue("long_url", request.getLongUrl())
                 .addKeyValue("new_short_code", entity.getShortCode())
@@ -147,6 +152,7 @@ public class UrlServiceImpl implements UrlService {
         urlRepo.deleteById(id);
 
         log.atInfo()
+                .addKeyValue("message", "url deleted")
                 .addKeyValue("event", "delete")
                 .addKeyValue("id", id)
                 .log();

@@ -27,6 +27,7 @@ public class ShortCodeCheckerImpl implements ShortCodeChecker {
                  : ShortCodeCheckStatus.VALID;
 
         log.atInfo()
+                .addKeyValue("message", "short code moderation check completed")
                 .addKeyValue("shortCode", request.getShortCode())
                 .addKeyValue("is allowed", currentStatus)
                 .log();
