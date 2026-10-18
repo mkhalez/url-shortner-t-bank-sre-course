@@ -1,0 +1,8 @@
+server:
+  retentionPeriod: 2d
+
+  persistentVolume:
+    size: 1Gi
+
+vector:
+  enabled: true
