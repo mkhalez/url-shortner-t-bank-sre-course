@@ -10,16 +10,22 @@ spec:
       app: url-service
   template:
     metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8082"
+        prometheus.io/path: "/actuator/prometheus"
       labels:
         app: url-service
     spec:
       containers:
         - name: url-service
-          image: mkhalez/url-service:0.5
+          image: mkhalez/url-service:0.6
           imagePullPolicy: IfNotPresent
           ports:
             - name: url-http
               containerPort: 80
+            - name: metrics
+              containerPort: 8082
           envFrom:
             - configMapRef:
                 name: url-service-config
@@ -28,13 +34,13 @@ spec:
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness
-              port: url-http
+              port: metrics
             initialDelaySeconds: 15
             periodSeconds: 5
           livenessProbe:
             httpGet:
               path: /actuator/health/liveness
-              port: url-http
+              port: metrics
             initialDelaySeconds: 30
             periodSeconds: 10
 ---

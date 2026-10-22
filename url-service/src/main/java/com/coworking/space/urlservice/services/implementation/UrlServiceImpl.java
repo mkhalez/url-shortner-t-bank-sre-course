@@ -16,6 +16,8 @@ import com.coworking.space.urlservice.mappers.UrlMapper;
 import com.coworking.space.urlservice.repositories.UrlRepository;
 import com.coworking.space.urlservice.services.UrlService;
 import com.coworking.space.urlservice.utils.ModerationGateway;
+import com.coworking.space.urlservice.utils.ShortTokenGenerator;
+import com.coworking.space.urlservice.utils.UrlMetrics;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -31,11 +33,10 @@ public class UrlServiceImpl implements UrlService {
     private final UrlMapper urlMapper;
     private final UrlProperties urlServiceProperties;
     private final ModerationGateway moderationGateway;
+    private final UrlMetrics urlMetrics;
+    private final ShortTokenGenerator shortTokenGenerator;
 
-    private static final int MAX_ATTEMPT_TO_CREATE = 1000;
-    private static final String BASE62 = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     private static final String LONG_URL_NOT_FOUND = "long url not found";
-    private static final String ATTEMPT_LIMIT_OF_TOKEN_CREATION = "the limit of attempts to create a token has been exceeded";
     private static final String SHORT_CODE_ALREADY_EXISTS = "short code already exists";
     private static final String CUSTOM_CODE_CONTAINS_BANNED_WORDS = "custom code contains banned words";
     private static final String SHORT_CODE_NOT_FOUND = "short code not found";
@@ -48,7 +49,7 @@ public class UrlServiceImpl implements UrlService {
             return urlMapper.toResponse(entity.get());
         }
 
-        String shortCode = generateShortToken(urlServiceProperties.getShortUrlLength());
+        String shortCode = shortTokenGenerator.generateShortToken(urlServiceProperties.getShortUrlLength());
         var urlEntity = UrlEntity.builder()
                 .longUrl(request.getLongUrl())
                 .shortCode(shortCode)
@@ -61,6 +62,8 @@ public class UrlServiceImpl implements UrlService {
                 .addKeyValue("long_url", request.getLongUrl())
                 .addKeyValue("short_code", urlEntity.getShortCode())
                 .log("short url created");
+        urlMetrics.randomCreated();
+
         return urlMapper.toResponse(urlEntity);
     }
 
@@ -79,6 +82,7 @@ public class UrlServiceImpl implements UrlService {
     @Override
     public UrlResponse createCustomShortUrl(CreateCustomUrlRequest request) {
         if(urlRepo.existsByShortCode(request.getCustomShortCode())) {
+            urlMetrics.customRejected(SHORT_CODE_ALREADY_EXISTS);
             throw new UrlAlreadyExistsException(SHORT_CODE_ALREADY_EXISTS);
         }
 
@@ -86,6 +90,7 @@ public class UrlServiceImpl implements UrlService {
                 new CheckShortCodeRequest(request.getCustomShortCode()));
 
         if(moderationResponse.getStatus() == ShortCodeCheckStatus.NOT_VALID) {
+            urlMetrics.customRejected(CUSTOM_CODE_CONTAINS_BANNED_WORDS);
             throw new NotValidCustomCodeException(CUSTOM_CODE_CONTAINS_BANNED_WORDS);
         }
 
@@ -101,14 +106,19 @@ public class UrlServiceImpl implements UrlService {
                 .addKeyValue("long_url", request.getLongUrl())
                 .addKeyValue("short_code", urlEntity.getShortCode())
                 .log("custom short url created");
+        urlMetrics.customCreated();
 
         return urlMapper.toResponse(urlEntity);
     }
 
     @Override
     public String getLongUrl(String shortCode) {
-        var entity = urlRepo.findByShortCode(shortCode)
-                .orElseThrow(() -> new UrlNotFoundException(SHORT_CODE_NOT_FOUND));
+        var entityOpt = urlRepo.findByShortCode(shortCode);
+
+        urlMetrics.redirect(entityOpt.isPresent());
+
+        var entity = entityOpt.orElseThrow(
+                () -> new UrlNotFoundException(SHORT_CODE_NOT_FOUND));
 
         log.atInfo()
                 .addKeyValue("event", "getLongUrl")
@@ -153,22 +163,5 @@ public class UrlServiceImpl implements UrlService {
                 .log("url deleted");
     }
 
-    private String generateShortToken(int length) {
-        ThreadLocalRandom random = ThreadLocalRandom.current();
 
-        for(int i = 0; i < MAX_ATTEMPT_TO_CREATE; i++) {
-            StringBuilder token  = new StringBuilder(length);
-            for(int j = 0; j < length; j++) {
-                int randomIndex = random.nextInt(BASE62.length());
-                token.append(BASE62.charAt(randomIndex));
-            }
-
-            String shortCode = token.toString();
-            if(!urlRepo.existsByShortCode(shortCode)) {
-                return shortCode;
-            }
-        }
-
-        throw new LimitTokenAttemptException(ATTEMPT_LIMIT_OF_TOKEN_CREATION);
-    }
 }

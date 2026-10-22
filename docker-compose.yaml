@@ -44,6 +44,7 @@ services:
     restart: unless-stopped
     ports:
       - "${URL_SERVICE_PORT}:${URL_SERVICE_PORT}"
+      - "${URL_SERVICE_METRICS_PORT}:${URL_SERVICE_METRICS_PORT}"
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_HOST: url-postgres
@@ -56,6 +57,7 @@ services:
       MODERATION_SERVICE_HOST: ${MODERATION_SERVICE_HOST}
       HTTP_READ_TIMEOUT: ${HTTP_READ_TIMEOUT}
       HTTP_CONNECT_TIMEOUT: ${HTTP_CONNECT_TIMEOUT}
+      URL_SERVICE_METRICS_PORT: ${URL_SERVICE_METRICS_PORT}
     networks:
       - backend
 
@@ -70,6 +72,7 @@ services:
     restart: unless-stopped
     environment:
       MODERATION_SERVICE_PORT: ${MODERATION_SERVICE_PORT}
+      MODERATION_SERVICE_METRICS_PORT: ${MODERATION_SERVICE_METRICS_PORT}
     networks:
       - backend
 

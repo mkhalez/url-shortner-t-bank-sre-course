@@ -6,13 +6,14 @@ import com.coworking.space.moderationservice.dto.responses.ShortCodeCheckStatus;
 import com.coworking.space.moderationservice.infrastrucure.properies.BannedWordsProperties;
 import com.coworking.space.moderationservice.services.ShortCodeChecker;
 import com.coworking.space.moderationservice.services.implementation.ShortCodeCheckerImpl;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ShortCodeCheckerTest {
     private final ShortCodeChecker checker = new ShortCodeCheckerImpl(
-            new BannedWordsProperties(Set.of("ban", "spam", "java")));
+            new BannedWordsProperties(Set.of("ban", "spam", "java")), new SimpleMeterRegistry());
 
     @Test
     void shortCodeWithBanWordsTest() {

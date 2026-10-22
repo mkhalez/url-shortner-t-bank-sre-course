@@ -5,6 +5,8 @@ import com.coworking.space.moderationservice.dto.requests.CheckShortCodeRequest;
 import com.coworking.space.moderationservice.dto.responses.CheckShortCodeResponse;
 import com.coworking.space.moderationservice.infrastrucure.properies.BannedWordsProperties;
 import com.coworking.space.moderationservice.services.ShortCodeChecker;
+import io.micrometer.core.annotation.Timed;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -16,6 +18,7 @@ import java.util.Locale;
 @Slf4j
 public class ShortCodeCheckerImpl implements ShortCodeChecker {
     private final BannedWordsProperties bannedWordsProperties;
+    private final MeterRegistry meterRegistry;
 
     @Override
     public CheckShortCodeResponse isAllowed(CheckShortCodeRequest request) {
@@ -30,6 +33,7 @@ public class ShortCodeCheckerImpl implements ShortCodeChecker {
                 .addKeyValue("shortCode", request.getShortCode())
                 .addKeyValue("is allowed", currentStatus)
                 .log("short code checked");
+        meterRegistry.counter("moderation.shortcode.checks", "result", currentStatus.name().toLowerCase()).increment();
 
         return CheckShortCodeResponse.builder()
                 .shortCode(request.getShortCode())

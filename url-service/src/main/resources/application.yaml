@@ -3,7 +3,7 @@ server:
 
 spring:
   config:
-    import: optional:file:.env[.properties]
+    import: optional:file:./url-service/.env[.properties]
   application:
     name: url-service
   jpa:
@@ -35,6 +35,13 @@ management:
   health:
     probes:
       enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  server:
+    port: ${URL_SERVICE_METRICS_PORT}
+
 
 logging:
   structured:
@@ -44,3 +51,5 @@ logging:
       service:
         name: url-service
         environment: dev
+
+

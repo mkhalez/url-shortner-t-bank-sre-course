@@ -6,3 +6,4 @@ metadata:
 data:
   POSTGRES_HOST: url-postgres-service
   MODERATION_SERVICE_PORT: "8081"
+  MODERATION_SERVICE_METRICS_PORT: "8083"

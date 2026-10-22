@@ -10,29 +10,35 @@ spec:
       app: moderation-service
   template:
     metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8083"
+        prometheus.io/path: "/actuator/prometheus"
       labels:
         app: moderation-service
     spec:
       containers:
         - name: moderation-service
-          image: mkhalez/moderation-service:0.5
+          image: mkhalez/moderation-service:0.6
           imagePullPolicy: IfNotPresent
           ports:
             - name: moderation-http
               containerPort: 8081
+            - name: metrics
+              containerPort: 8083
           envFrom:
             - configMapRef:
                 name: moderation-service-config
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness
-              port: moderation-http
+              port: metrics
             initialDelaySeconds: 15
             periodSeconds: 5
           livenessProbe:
             httpGet:
               path: /actuator/health/liveness
-              port: moderation-http
+              port: metrics
             initialDelaySeconds: 30
             periodSeconds: 10
 ---
