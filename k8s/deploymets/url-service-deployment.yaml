@@ -31,6 +31,13 @@ spec:
                 name: url-service-config
             - secretRef:
                 name: url-shortener-secrets
+          resources:
+            requests:
+              cpu: 100m
+              memory: 384Mi
+            limits:
+              cpu: 500m
+              memory: 768Mi
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness

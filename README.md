@@ -95,6 +95,7 @@ kubectl apply -f k8s/jobs/url-posgres-migration.yaml
 kubectl apply -f k8s/deploymets/url-service-deployment.yaml \
   -f k8s/deploymets/moderation-service-deployment.yaml
 kubectl apply -f k8s/ingreses/url-shortener-ingress.yaml
+kubectl apply -f k8s/networkpolicies/
 ```
 
 Используемые образы:

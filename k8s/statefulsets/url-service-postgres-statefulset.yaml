@@ -57,6 +57,13 @@ spec:
                   key: POSTGRES_PASSWORD
             - name: PGDATA
               value: /var/lib/postgresql/data/pgdata
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
           volumeMounts:
             - name: pgdata
               mountPath: /var/lib/postgresql/data
@@ -93,6 +100,13 @@ spec:
                   key: POSTGRES_DB
             - name: DATA_SOURCE_NAME
               value: "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost:5432/$(POSTGRES_DB)?sslmode=disable"
+          resources:
+            requests:
+              cpu: 20m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
           readinessProbe:
             httpGet:
               path: /

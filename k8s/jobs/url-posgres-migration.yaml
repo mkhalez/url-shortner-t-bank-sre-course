@@ -7,6 +7,9 @@ spec:
   backoffLimit: 3
   activeDeadlineSeconds: 600
   template:
+    metadata:
+      labels:
+        app: url-service-postgres-migration
     spec:
       restartPolicy: Never
       initContainers:
@@ -29,6 +32,13 @@ spec:
                 configMapKeyRef:
                   name: url-service-config
                   key: POSTGRES_PORT
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
       containers:
         - name: liquibase
           image: mkhalez/url-migration:0.2
@@ -62,4 +72,11 @@ spec:
                   key: POSTGRES_PASSWORD
             - name: LIQUIBASE_COMMAND_CHANGELOG_FILE
               value: "changelog/changelog.xml"
+          resources:
+            requests:
+              cpu: 50m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
           args: ["update"]

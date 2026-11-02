@@ -1,0 +1,28 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: migration-job-network-policy
+  namespace: url-shortener-namespace
+spec:
+  podSelector:
+    matchLabels:
+      app: url-service-postgres-migration
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    - to:
+        - podSelector:
+            matchLabels:
+              app: url-postgres
+      ports:
+        - protocol: TCP
+          port: 5432
