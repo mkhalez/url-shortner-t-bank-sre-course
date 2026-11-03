@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: slo-prober
+  namespace: url-shortener-namespace
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: slo-prober
+  template:
+    metadata:
+      labels:
+        app: slo-prober
+    spec:
+      containers:
+        - name: prober
+          image: python:3.12-alpine
+          command: ["python", "/app/prober.py"]
+          envFrom:
+            - configMapRef:
+                name: slo-prober-config
+          resources:
+            requests:
+              cpu: 20m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+          volumeMounts:
+            - name: script
+              mountPath: /app
+      volumes:
+        - name: script
+          configMap:
+            name: slo-prober-script

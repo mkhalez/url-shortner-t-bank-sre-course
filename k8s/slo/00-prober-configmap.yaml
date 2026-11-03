@@ -1,0 +1,145 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: slo-prober-script
+  namespace: url-shortener-namespace
+data:
+  prober.py: |
+    import http.client
+    import json
+    import os
+    import time
+    import urllib.parse
+    import urllib.request
+    import uuid
+
+    TARGET_HOST = os.getenv("TARGET_HOST", "url-service")
+    TARGET_PORT = int(os.getenv("TARGET_PORT", "80"))
+    TIMEOUT = float(os.getenv("PROBE_TIMEOUT_SECONDS", "5"))
+    INTERVAL = int(os.getenv("PROBE_INTERVAL_SECONDS", "30"))
+    VM_IMPORT_URL = os.getenv(
+        "VM_IMPORT_URL",
+        "http://vmsingle-victoria-metrics-single-server:8428/api/v1/import/prometheus",
+    )
+
+
+    class ProbeError(RuntimeError):
+        def __init__(self, message, status=0):
+            super().__init__(message)
+            self.status = status
+
+
+    def request(method, path, body=None):
+        connection = http.client.HTTPConnection(
+            TARGET_HOST, TARGET_PORT, timeout=TIMEOUT
+        )
+        payload = json.dumps(body).encode() if body is not None else None
+        headers = {"Content-Type": "application/json"} if payload is not None else {}
+
+        connection.request(method, path, body=payload, headers=headers)
+        response = connection.getresponse()
+        data = response.read()
+        response_headers = {
+            key.lower(): value for key, value in response.getheaders()
+        }
+        status = response.status
+        connection.close()
+        return status, response_headers, data
+
+
+    def probe_redirect():
+        long_url = f"https://example.com/probe/{uuid.uuid4().hex}"
+
+        status, _, body = request("POST", "/urls", {"longUrl": long_url})
+        if status != 201:
+            raise ProbeError(f"create failed: {status}", status)
+
+        payload = json.loads(body)
+        short_path = urllib.parse.urlparse(payload["shortUrl"]).path
+        if not short_path:
+            raise ProbeError("shortUrl has no path", status)
+
+        try:
+            status, headers, _ = request("GET", short_path)
+            if status != 302:
+                raise ProbeError(f"redirect failed: {status}", status)
+            if headers.get("location") != long_url:
+                raise ProbeError("redirect location mismatch", status)
+            return status
+        finally:
+            try:
+                request("DELETE", f"/urls/{payload['id']}")
+            except Exception as exc:
+                print(f"cleanup failed: {exc}", flush=True)
+
+
+    def push_metrics(lines):
+        body = "\n".join(lines).encode()
+        request_object = urllib.request.Request(
+            VM_IMPORT_URL,
+            data=body,
+            method="POST",
+            headers={"Content-Type": "text/plain"},
+        )
+        with urllib.request.urlopen(request_object, timeout=TIMEOUT) as response:
+            response.read()
+
+
+    def metrics(ok, status, duration, total, success):
+        return [
+            f'probe_success{{job="slo-prober",scenario="redirect"}} {ok}',
+            f'probe_duration_seconds{{job="slo-prober",scenario="redirect"}} {duration:.6f}',
+            f'probe_http_status_code{{job="slo-prober",scenario="redirect"}} {status}',
+            f'probe_total{{job="slo-prober",scenario="redirect"}} {total}',
+            f'probe_success_total{{job="slo-prober",scenario="redirect"}} {success}',
+            f'probe_last_run_timestamp_seconds{{job="slo-prober"}} {time.time():.0f}',
+        ]
+
+
+    def main():
+        total = 0
+        success = 0
+
+        while True:
+            started = time.monotonic()
+            status = 0
+            ok = 0
+
+            try:
+                status = probe_redirect()
+                ok = 1
+                success += 1
+            except ProbeError as exc:
+                status = exc.status
+                print(f"probe failed: {exc}", flush=True)
+            except Exception as exc:
+                print(f"probe error: {exc}", flush=True)
+
+            total += 1
+            duration = time.monotonic() - started
+
+            try:
+                push_metrics(metrics(ok, status, duration, total, success))
+            except Exception as exc:
+                print(f"push failed: {exc}", flush=True)
+
+            print(f"ok={ok} status={status} duration={duration:.3f}s", flush=True)
+
+            elapsed = time.monotonic() - started
+            time.sleep(max(1.0, INTERVAL - elapsed))
+
+
+    if __name__ == "__main__":
+        main()
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: slo-prober-config
+  namespace: url-shortener-namespace
+data:
+  TARGET_HOST: url-service
+  TARGET_PORT: "80"
+  PROBE_INTERVAL_SECONDS: "30"
+  PROBE_TIMEOUT_SECONDS: "5"
+  VM_IMPORT_URL: http://vmsingle-victoria-metrics-single-server:8428/api/v1/import/prometheus
