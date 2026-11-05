@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vmalert-config
+  namespace: url-shortener-namespace
+data:
+  VMALERT_RULE: "/etc/vmalert/alerts.yaml"
+  VMALERT_DATASOURCE_URL: "http://vmsingle-victoria-metrics-single-server:8428"
+  VMALERT_NOTIFIER_URL: "http://alertmanager:9093"
+  VMALERT_REMOTE_WRITE_URL: "http://vmsingle-victoria-metrics-single-server:8428"
+  VMALERT_REMOTE_READ_URL: "http://vmsingle-victoria-metrics-single-server:8428"
+  VMALERT_EVALUATION_INTERVAL: "30s"
+  VMALERT_HTTP_LISTEN_ADDR: ":8080"

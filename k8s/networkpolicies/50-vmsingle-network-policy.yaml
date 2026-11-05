@@ -17,3 +17,10 @@ spec:
       ports:
         - protocol: TCP
           port: 8428
+    - from:
+        - podSelector:
+            matchLabels:
+              app: vmalert
+      ports:
+        - protocol: TCP
+          port: 8428
