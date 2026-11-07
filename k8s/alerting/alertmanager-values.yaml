@@ -33,21 +33,26 @@ config:
           chat_id: 1077845643
           parse_mode: HTML
           send_resolved: true
-          message: |
-            {{ if .Alerts.Firing }}🔥 FIRING ({{ len .Alerts.Firing }}){{ end }}
-            {{ if .Alerts.Resolved }}✅ RESOLVED ({{ len .Alerts.Resolved }}){{ end }}
-
+          message: |-
+            {{- if .Alerts.Firing }}🔥 <b>FIRING ({{ len .Alerts.Firing }})</b>
             {{ range .Alerts.Firing }}
-            🔥 <b>{{ .Labels.alertname }}</b> [{{ .Labels.severity }}]
+            <b>{{ .Labels.alertname }}</b> [{{ .Labels.severity }}]
+            {{- if .Labels.pod }}
+            Под: <code>{{ .Labels.pod }}</code>
+            {{- end }}
             {{ .Annotations.summary }}
             {{ .Annotations.description }}
             {{ end }}
-
+            {{- end }}
+            {{- if .Alerts.Resolved }}✅ <b>RESOLVED ({{ len .Alerts.Resolved }})</b>
             {{ range .Alerts.Resolved }}
-            ✅ <b>{{ .Labels.alertname }}</b> [{{ .Labels.severity }}]
+            <b>{{ .Labels.alertname }}</b> [{{ .Labels.severity }}]
+            {{- if .Labels.pod }}
+            Под: <code>{{ .Labels.pod }}</code>
+            {{- end }}
             {{ .Annotations.summary }}
-            {{ .Annotations.description }}
             {{ end }}
+            {{- end }}
 
   inhibit_rules:
     - source_matchers: [alertname="HikariConnectionPoolSaturation"]
