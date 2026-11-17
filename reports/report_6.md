@@ -21,10 +21,10 @@
 
 | № | Алерт | Тип | Метрика | Условие | `for` | Severity |
 |---|---|---|---|---|---|---|
-| 1 | `UrlServiceHighErrorRate` | сервис | `http_server_requests_seconds_count` | доля 5xx > 5% при трафике > 0.2 rps | 2m | critical |
+| 1 | `UrlServiceHighErrorRate` | сервис | `http_server_requests_seconds_count` | доля 5xx > 5% при трафике > 0.2 rps | 5m | critical |
 | 2 | `UrlTokenGenerationSlow` | сервис | `url_token_generation_duration_seconds_bucket` | p95 генерации токена > 1s | 2m | warning |
 | 3 | `JvmHeapUsageHigh` | runtime | `jvm_memory_used_bytes` / `jvm_memory_max_bytes` | heap > 85% | 5m | warning |
-| 4 | `HikariConnectionPoolSaturation` | framework | `hikaricp_connections_pending` | есть запросы в очереди пула | 2m | critical |
+| 4 | `HikariConnectionPoolSaturation` | framework | `hikaricp_connections_pending` | есть запросы в очереди пула | 5m | warning |
 
 ### `UrlServiceHighErrorRate`
 
@@ -34,23 +34,23 @@
     app="url-service",
     outcome="SERVER_ERROR",
     uri!~"/actuator.*"
-  }[5m]))
+  }[2m]))
   /
   sum(rate(http_server_requests_seconds_count{
     app="url-service",
     uri!~"/actuator.*"
-  }[5m]))
+  }[2m]))
 ) > 0.05
 and
 sum(rate(http_server_requests_seconds_count{
   app="url-service",
   uri!~"/actuator.*"
-}[5m])) > 0.2
+}[2m])) > 0.2
 ```
 
 - `outcome="SERVER_ERROR"` — это 5xx. Ошибки 4xx являются ошибками клиента и не должны снижать доступность сервиса.
 - `uri!~"/actuator.*"` — исключает health-пробы Kubernetes.
-- `for: 2m` отсекает единичные всплески.
+- Окно `[2m]` не даёт короткому блипу удерживать условие, а `for: 5m` даёт запас на фейловер, переподключение пула и перезапуск подов БД; единичные всплески при этом не поднимают алерт.
 - Условие `sum(rate(...)) > 0.2` защищает от ложных срабатываний при почти нулевом трафике.
 .
 
@@ -95,8 +95,11 @@ sum by (app, pod) (
 ```
 
 - `hikaricp_connections_pending` - число запросов, ожидающих соединение из пула.
-- `for: 2m` исключает кратковременные всплески.
+- Это технический leading indicator: saturation видна раньше, чем проявится в 5xx, и указывает на конкретную причину — пул, а не БД, релиз или сеть. При этом перегрузка пула не всегда даёт 5xx: запросы могут дождаться соединения и просто ответить медленно.
+- `for: 5m` реагирует на устойчивую очередь, а не на кратковременный всплеск.
+- `severity: warning`: проблема не пользовательская, поэтому не пейджит как `UrlServiceHighErrorRate` (critical), а уходит в техканал с `repeat_interval` 4h.
 - Разбивка `by (app, pod)` позволяет понять, на каком поде закончились соединения.
+- Алерт подавляет `UrlTokenGenerationSlow` через инхибицию: причина глушит следствие.
 
 ## Alertmanager
 
