@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: vmalert
+  namespace: url-shortener-namespace
+  labels:
+    app: vmalert
+spec:
+  selector:
+    app: vmalert
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http

@@ -37,6 +37,7 @@ build/
 **/.env
 
 k8s/secrets/url-service-secrets.yaml
+k8s/alerting/alertmanager-telegram-secret.yaml
 
 .mvn/
 mvnw

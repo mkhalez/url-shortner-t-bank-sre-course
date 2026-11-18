@@ -4,27 +4,28 @@
 Использованы оба подхода:
 
 - **RBSLO (Request Based SLO)** — доля успешных запросов: HTTP availability, latency, probe success;
-- **TBSLO (Time Based SLO)** — доля времени доступности: PostgreSQL availability.
+- **TBSLO (Time Based SLO)** — доля времени доступности: диагностический индикатор PostgreSQL; используется как leading indicator и не входит в клиентский SLO.
 
 ## SLI №1. Доступность HTTP
 
 ### Метрика
 
-`http_server_requests_seconds_count{app="url-service", outcome!="SERVER_ERROR"}`
+`http_server_requests_seconds_count{app="url-service", uri!~"/actuator.*"}`
 
 Micrometer размечает HTTP-запросы лейблом `outcome`. Значение `SERVER_ERROR` соответствует ответам 5xx. Ошибки 4xx считаются ошибками клиента и не уменьшают доступность сервиса.
 
 ### Формула
 
 ```promql
-sum(increase(http_server_requests_seconds_count{
-  app="url-service",
-  outcome!="SERVER_ERROR"
-}[5m]))
+sum(rate(http_server_requests_seconds_count{
+  app="url-service", uri!~"/actuator.*",
+  outcome=~"SUCCESS|REDIRECTION|INFORMATIONAL"
+}[1m]))
 /
-sum(increase(http_server_requests_seconds_count{
-  app="url-service"
-}[5m]))
+sum(rate(http_server_requests_seconds_count{
+  app="url-service", uri!~"/actuator.*",
+  outcome!~"CLIENT_ERROR|UNKNOWN"
+}[1m]))
 ```
 
 ### SLO и SLA
@@ -78,7 +79,7 @@ sum(increase(url_token_generation_duration_seconds_count{
 
 Красная линия — доля генераций ≤ 7 мс. Синяя — SLO 99%, зелёная — SLA 98%.
 
-## SLI №3. Доступность PostgreSQL
+## SLI №3 (диагностический). Доступность PostgreSQL (внутренняя зависимость)
 
 ### Метрика
 
@@ -98,14 +99,18 @@ avg_over_time(
 - `or vector(0)` превращает отсутствие метрики в `0`, то есть пропавший exporter считается недоступностью;
 - `avg_over_time` считает долю времени, когда БД была доступна.
 
-### SLO и SLA
+### Почему БД не входит в SLO сервиса
+
+Клиентский SLO описывает то, что видит пользователь, а не состояние внутренних компонентов. Доступность БД — свойство зависимости, а не обещание сервиса. Если считать её отдельным SLO на одном уровне с HTTP-доступностью, возникает двойной учёт: при падении БД одновременно сгорают error budget и HTTP-SLI, и PostgreSQL-SLI, хотя для клиента это одна и та же деградация. Кроме того, `pg_up=0` может означать отказ `postgres-exporter`, а не самой БД, поэтому такой индикатор плохо подходит для внешних обещаний.
+
+При этом индикатор полезен как leading indicator: деградация БД проявляется раньше, чем сгорит пользовательский error budget, и позволяет быстро локализовать причину — БД или приложение. Поэтому он остаётся в отчёте как диагностический и не входит в SLA.
+
+### Внутренний ориентир
 
 | Параметр | Значение |
 |---|---|
-| SLO | 99.9% времени доступности за 30 дней |
-| SLA | 99.5% времени доступности за календарный месяц |
-| Error budget SLO | 43 минуты 12 секунд на 30 дней |
-| Error budget SLA | 3 часа 36 минут на 30 дней |
+| Внутренний ориентир | 99.9% времени доступности за 30 дней (43 минуты 12 секунд) |
+| Клиентский SLA | не входит |
 
 ### График
 

@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vmalert
+  namespace: url-shortener-namespace
+  labels:
+    app: vmalert
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vmalert
+  template:
+    metadata:
+      labels:
+        app: vmalert
+    spec:
+      containers:
+        - name: vmalert
+          image: victoriametrics/vmalert:v1.154.0
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: vmalert-config
+          args:
+            - -rule=$(VMALERT_RULE)
+            - -datasource.url=$(VMALERT_DATASOURCE_URL)
+            - -notifier.url=$(VMALERT_NOTIFIER_URL)
+            - -remoteWrite.url=$(VMALERT_REMOTE_WRITE_URL)
+            - -remoteRead.url=$(VMALERT_REMOTE_READ_URL)
+            - -evaluationInterval=$(VMALERT_EVALUATION_INTERVAL)
+            - -httpListenAddr=$(VMALERT_HTTP_LISTEN_ADDR)
+          ports:
+            - name: http
+              containerPort: 8080
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 128Mi
+          volumeMounts:
+            - name: rules
+              mountPath: /etc/vmalert
+              readOnly: true
+      volumes:
+        - name: rules
+          configMap:
+            name: vmalert-rules

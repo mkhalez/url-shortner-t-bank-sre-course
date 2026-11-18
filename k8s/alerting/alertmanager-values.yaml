@@ -1,0 +1,66 @@
+fullnameOverride: alertmanager
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 200m
+    memory: 128Mi
+
+config:
+  global:
+    resolve_timeout: 5m
+
+  route:
+    receiver: telegram
+    group_by: [alertname, service]
+    group_wait: 10s
+    group_interval: 1m
+    repeat_interval: 2h
+    routes:
+      - matchers: [severity="critical"]
+        receiver: telegram
+        repeat_interval: 30m
+      - matchers: [severity="warning"]
+        receiver: telegram
+        repeat_interval: 4h
+
+  receivers:
+    - name: telegram
+      telegram_configs:
+        - bot_token_file: /etc/alertmanager/secrets/telegram-token
+          chat_id: 1077845643
+          parse_mode: HTML
+          send_resolved: true
+          message: |-
+            {{- if .Alerts.Firing }}🔥 <b>FIRING ({{ len .Alerts.Firing }})</b>
+            {{ range .Alerts.Firing }}
+            <b>{{ .Labels.alertname }}</b> [{{ .Labels.severity }}]
+            {{- if .Labels.pod }}
+            Под: <code>{{ .Labels.pod }}</code>
+            {{- end }}
+            {{ .Annotations.summary }}
+            {{ .Annotations.description }}
+            {{ end }}
+            {{- end }}
+            {{- if .Alerts.Resolved }}✅ <b>RESOLVED ({{ len .Alerts.Resolved }})</b>
+            {{ range .Alerts.Resolved }}
+            <b>{{ .Labels.alertname }}</b> [{{ .Labels.severity }}]
+            {{- if .Labels.pod }}
+            Под: <code>{{ .Labels.pod }}</code>
+            {{- end }}
+            {{ .Annotations.summary }}
+            {{ end }}
+            {{- end }}
+
+  inhibit_rules:
+    - source_matchers: [alertname="HikariConnectionPoolSaturation"]
+      target_matchers: [alertname="UrlTokenGenerationSlow"]
+      equal: [service]
+
+extraSecretMounts:
+  - name: telegram-token
+    secretName: alertmanager-telegram
+    mountPath: /etc/alertmanager/secrets
+    readOnly: true
