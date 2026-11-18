@@ -1,0 +1,21 @@
+persistence:
+  enabled: true
+  size: 1Gi
+
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+      - name: VictoriaMetrics
+        uid: victoriametrics
+        type: prometheus
+        access: proxy
+        url: http://vmsingle-victoria-metrics-single-server:8428
+        isDefault: true
+        editable: false
+        jsonData:
+          httpVersion: HTTP/1.1
+          timeInterval: 15s
+          prometheusType: Prometheus
+          prometheusVersion: 2.45.0
+          manageAlerts: false
