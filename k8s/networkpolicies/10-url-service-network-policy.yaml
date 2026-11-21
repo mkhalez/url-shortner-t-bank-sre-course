@@ -19,6 +19,17 @@ spec:
         - protocol: TCP
           port: 80
     - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: envoy-gateway-system
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: envoy
+              app.kubernetes.io/component: proxy
+      ports:
+        - protocol: TCP
+          port: 80
+    - from:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: victoria-metrics-single

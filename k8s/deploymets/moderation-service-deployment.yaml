@@ -48,6 +48,13 @@ spec:
               port: metrics
             initialDelaySeconds: 30
             periodSeconds: 10
+          startupProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: metrics
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 30
 ---
 apiVersion: v1
 kind: Service

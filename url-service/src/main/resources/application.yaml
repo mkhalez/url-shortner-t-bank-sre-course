@@ -31,6 +31,11 @@ moderation-client:
   connection-timeout: ${HTTP_READ_TIMEOUT:3000}
   read-timeout: ${HTTP_CONNECT_TIMEOUT:3000}
 
+
+app:
+  version: ${APP_VERSION:dev}
+  pod-name: ${POD_NAME:unknown}
+
 management:
   health:
     probes:
