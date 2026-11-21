@@ -42,3 +42,5 @@ k8s/alerting/alertmanager-telegram-secret.yaml
 .mvn/
 mvnw
 mvnw.cmd
+
+temp/
