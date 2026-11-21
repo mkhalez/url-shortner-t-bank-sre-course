@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: url-service-v2
+  namespace: url-shortener-namespace
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: url-service-v2
+  template:
+    metadata:
+      labels:
+        app: url-service-v2
+        version: v2
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8082"
+        prometheus.io/path: "/actuator/prometheus"
+    spec:
+      containers:
+        - name: url-service
+          image: mkhalez/url-service:v1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: url-http
+              containerPort: 80
+            - name: metrics
+              containerPort: 8082
+          env:
+            - name: APP_VERSION
+              value: "v2"
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          envFrom:
+            - configMapRef:
+                name: url-service-config
+            - secretRef:
+                name: url-shortener-secrets
+          resources:
+            requests:
+              cpu: 100m
+              memory: 384Mi
+            limits:
+              cpu: 500m
+              memory: 768Mi
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: metrics
+            initialDelaySeconds: 15
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: metrics
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          startupProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: metrics
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: url-service-v2
+  namespace: url-shortener-namespace
+spec:
+  selector:
+    app: url-service-v2
+  ports:
+    - name: http
+      port: 80
+      targetPort: url-http

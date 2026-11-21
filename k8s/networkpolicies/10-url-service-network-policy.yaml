@@ -5,8 +5,12 @@ metadata:
   namespace: url-shortener-namespace
 spec:
   podSelector:
-    matchLabels:
-      app: url-service
+    matchExpressions:
+      - key: app
+        operator: In
+        values:
+          - url-service
+          - url-service-v2
   policyTypes:
     - Ingress
     - Egress
@@ -15,6 +19,17 @@ spec:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 80
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: envoy-gateway-system
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: envoy
+              app.kubernetes.io/component: proxy
       ports:
         - protocol: TCP
           port: 80
