@@ -1,0 +1,16 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: url-service
+  namespace: url-shortener-namespace
+spec:
+  parentRefs:
+    - name: eg
+  rules:
+    - backendRefs:
+        - name: url-service
+          port: 80
+          weight: 90
+        - name: url-service-v2
+          port: 80
+          weight: 10

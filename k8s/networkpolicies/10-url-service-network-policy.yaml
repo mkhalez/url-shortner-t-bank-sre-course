@@ -5,8 +5,12 @@ metadata:
   namespace: url-shortener-namespace
 spec:
   podSelector:
-    matchLabels:
-      app: url-service
+    matchExpressions:
+      - key: app
+        operator: In
+        values:
+          - url-service
+          - url-service-v2
   policyTypes:
     - Ingress
     - Egress
